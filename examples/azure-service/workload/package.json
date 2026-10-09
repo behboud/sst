@@ -1,0 +1,13 @@
+{
+  "name": "sst-azure-service-workload",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:api": "bun --watch src/api.ts",
+    "dev:sidecar": "bun --watch src/sidecar.ts"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@azure/storage-blob": "^12.26.0"
+  }
+}

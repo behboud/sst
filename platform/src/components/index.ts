@@ -1,4 +1,5 @@
 export * as aws from "./aws/index.js";
+export * as azure from "./azure/index.js";
 export * as cloudflare from "./cloudflare/index.js";
 export * as vercel from "./vercel/index.js";
 export * from "./secret.js";

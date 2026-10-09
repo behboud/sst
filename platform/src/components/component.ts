@@ -93,6 +93,71 @@ export class Component extends ComponentResource {
           //       the resource is b/c the physical name is inferred from the logical name.
           //       And it's convenient to access the logical name here.
           if (args.type.startsWith("sst:")) return;
+
+          const azureNameRules: Record<string, [string, RegExp]> = {
+            "azure-native:resources:ResourceGroup": [
+              "resourceGroupName",
+              /^[A-Za-z0-9_.()-]{1,90}$/,
+            ],
+            "azure-native:containerregistry:Registry": [
+              "registryName",
+              /^[a-z0-9]{5,50}$/,
+            ],
+            "azure-native:app:ManagedEnvironment": [
+              "environmentName",
+              /^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])$/,
+            ],
+            "azure-native:app:ContainerApp": [
+              "containerAppName",
+              /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])$/,
+            ],
+            "azure-native:managedidentity:UserAssignedIdentity": [
+              "resourceName",
+              /^[A-Za-z0-9_.()-]{3,128}$/,
+            ],
+            "azure-native:authorization:RoleAssignment": [
+              "roleAssignmentName",
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            ],
+            "azure-native:storage:StorageAccount": [
+              "accountName",
+              /^[a-z0-9]{3,24}$/,
+            ],
+            "azure-native:storage:BlobContainer": [
+              "containerName",
+              /^(?!.*--)[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$/,
+            ],
+          };
+          const azureNameRule = azureNameRules[args.type];
+          if (azureNameRule) {
+            const [field, pattern] = azureNameRule;
+            const value = args.props?.[field];
+            if (value !== undefined) {
+              const validateAzureName = (physicalName: string) => {
+                if (
+                  typeof physicalName !== "string" ||
+                  !pattern.test(physicalName)
+                ) {
+                  throw new VisibleError(
+                    `Invalid Azure physical name "${String(
+                      physicalName,
+                    )}" for ${args.type}.${field}.`,
+                  );
+                }
+                return physicalName;
+              };
+              if (typeof value === "string") validateAzureName(value);
+              else {
+                return {
+                  props: {
+                    ...args.props,
+                    [field]: output(value).apply(validateAzureName),
+                  },
+                  opts: args.opts,
+                };
+              }
+            }
+          }
           if (
             [
               // resources manually named
@@ -188,6 +253,16 @@ export class Component extends ComponentResource {
               "cloudflare:index/workersCustomDomain:WorkersCustomDomain",
               "cloudflare:index/queueConsumer:QueueConsumer",
               "docker-build:index:Image",
+              // Azure Native resources supply provider-specific physical names or IDs.
+              // Keep this allowlist to the exact resource types used by sst.azure.Service.
+              "azure-native:resources:ResourceGroup",
+              "azure-native:containerregistry:Registry",
+              "azure-native:app:ManagedEnvironment",
+              "azure-native:app:ContainerApp",
+              "azure-native:managedidentity:UserAssignedIdentity",
+              "azure-native:authorization:RoleAssignment",
+              "azure-native:storage:StorageAccount",
+              "azure-native:storage:BlobContainer",
               "vercel:index/dnsRecord:DnsRecord",
               "aws:dsql/clusterPeering:ClusterPeering"
             ].includes(args.type)

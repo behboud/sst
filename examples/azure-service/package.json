@@ -1,0 +1,22 @@
+{
+  "name": "azure-service-example",
+  "private": true,
+  "scripts": {
+    "dev": "bun sst dev --stage local",
+    "deploy": "bun sst deploy --stage acceptance",
+    "preflight": "bun scripts/preflight.mjs",
+    "test:preflight": "bun test scripts/preflight.test.mjs",
+    "test:acceptance": "bun scripts/acceptance.mjs",
+    "load": "bun scripts/load.mjs",
+    "typecheck": "tsc --noEmit -p workload/tsconfig.json"
+  },
+  "dependencies": {
+    "@pulumi/azure-native": "3.28.0",
+    "sst": "file:../../sdk/js"
+  },
+  "devDependencies": {
+    "@types/bun": "1.2.1",
+    "@types/node": "^22.10.0",
+    "typescript": "5.7.2"
+  }
+}
