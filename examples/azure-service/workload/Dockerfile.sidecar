@@ -1,0 +1,11 @@
+FROM oven/bun:1.3.13
+
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --production --frozen-lockfile
+COPY . .
+
+ARG BUILD_MARKER=unset
+ENV BUILD_MARKER=${BUILD_MARKER}
+EXPOSE 8081
+CMD ["bun", "src/sidecar.ts"]

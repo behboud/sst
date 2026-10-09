@@ -1,0 +1,9 @@
+.sst
+.env*
+*.pem
+*.key
+*.p12
+*.pfx
+*.tfstate*
+Pulumi.*.yaml
+secrets/

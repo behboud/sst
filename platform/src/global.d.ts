@@ -23,7 +23,7 @@
  * @packageDocumentation
  */
 
-import "@types/node";
+/// <reference types="node" />
 import * as util from "@pulumi/pulumi";
 import * as _sst from "./components/index";
 import { $config as config, App } from "./config";

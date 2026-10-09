@@ -1,4 +1,4 @@
-import { describe, beforeAll, it, expect } from "vitest";
+import { describe, beforeAll, it, expect, vi } from "vitest";
 import "../../src/global.d.ts";
 import * as pulumi from "@pulumi/pulumi";
 import fs from "fs";
@@ -25,8 +25,38 @@ global.$cli = {
 };
 // @ts-ignore — fargate.ts uses $jsonStringify for container definitions
 global.$jsonStringify = JSON.stringify;
-// Suppress SST_SERVER RPC calls during tests
-process.env.SST_SERVER = "http://localhost:13557";
+vi.mock("../../src/components/rpc/rpc.js", () => {
+  let nextId = 0;
+  class MockProvider {
+    async create(inputs: any) {
+      return { id: `mock-${++nextId}`, outs: inputs };
+    }
+    async delete() {}
+    async update(_id: string, _olds: any, news: any) {
+      return { outs: news };
+    }
+    async read(id: string, props: any) {
+      return { id, props };
+    }
+    async diff() {
+      return { changes: false };
+    }
+  }
+  return {
+    rpc: {
+      Provider: MockProvider,
+      async call(method: string) {
+        if (method === "Provider.Aws.Bootstrap") {
+          return {
+            assetEcrRegistryId: "123456789",
+            assetEcrUrl: "123456789.dkr.ecr.us-east-1.amazonaws.com",
+          };
+        }
+        return {};
+      },
+    },
+  };
+});
 
 const createdResources: pulumi.runtime.MockResourceArgs[] = [];
 
@@ -44,6 +74,8 @@ pulumi.runtime.setMocks(
           arn: `arn:aws:mock:us-east-1:123456789:${args.type}/${args.inputs.name}`,
           dnsName: `${args.inputs.name}.us-east-1.elb.amazonaws.com`,
           zoneId: "Z1234567890",
+          securityGroups: args.inputs.securityGroups ?? ["sg-mock-id"],
+          vpcId: args.inputs.vpcId ?? "vpc-123",
           name: args.inputs.name || args.name,
           status: "ACTIVE",
           tags: {
